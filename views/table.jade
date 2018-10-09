@@ -1,0 +1,26 @@
+extends layout
+
+block content
+  h1= title
+  
+  p= "Paramètres : " + param 
+
+  p= "Last id : " + offset
+
+  div
+    ul
+    - for (var row in table){
+      - v = table[row]["dataValues"];
+      h3= "Table : " + row 
+      
+      - for (var field in v){
+        - value = v[field];
+        - if (typeof value === "object"){ /* Handling point case */
+          - if (value !== null){
+            - value = "[" + value["coordinates"] + "]";
+          - } else {
+          - value = "";}
+        - }
+        li= field + " : " + value
+      - }
+    - }

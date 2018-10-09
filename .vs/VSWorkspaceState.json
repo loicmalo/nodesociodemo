@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\.idea",
+    "\\bin",
+    "\\db",
+    "\\entities",
+    "\\repositories",
+    "\\routes",
+    "\\routes\\companies",
+    "\\routes\\export",
+    "\\routes\\test"
+  ],
+  "SelectedNode": "\\routes\\export\\index.js",
+  "PreviewInSolutionExplorer": false
+}
