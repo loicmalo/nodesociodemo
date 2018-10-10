@@ -13,7 +13,7 @@ var process;
 var statusData = [];
 let maxNbLignesPerRequest = 1000;
 const libAttributes = {
-    attributes: ['id', 'id_indic', 'lib_indic', 'lib_indic_long', 'themes', 'sous_themes', 'annee_data', 'annee_pub']
+    attributes: ['id', 'id_indic', 'lib_indic', 'lib_indic_long', 'themes', 'sous_themes', 'niveau_geo', 'annee_data', 'annee_pub']
 };
 /* GET home page of export. */
 router.get('/', VerifyToken, function (req, res) {

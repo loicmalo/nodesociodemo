@@ -5,14 +5,11 @@
         <group>
             <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/db/sociodemoQueryExecutionner.js</file>
             <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/routes/download/index_1.js</file>
-            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/entities/test.js</file>
-            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/routes/download/index.js</file>
             <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/utils/file-manager.js</file>
-            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/utils/file-manager_1.js</file>
             <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/app.js</file>
-            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/repositories/testRepository.js</file>
-            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/bin/www</file>
-            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/repositories/testIntituleRepository.js</file>
+            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/entities/sociodemo.js</file>
+            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/entities/lib_insee.js</file>
+            <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/utils/download_data.js</file>
             <file>file:/C:/Users/lmalo/Documents/sirene-api-get_to_post_optimization/sirene-api/nodesociodemo/db/dbConnection.js</file>
         </group>
     </open-files>
