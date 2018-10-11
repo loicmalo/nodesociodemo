@@ -3,7 +3,7 @@
  */
 
 //Libraries/modules
-const fmanager = require('./file-manager');
+const fmanager = require('./file-manager_1');
 const http = require('http');
 const qp = require('./sociodemo-query-parser');
 const repo = require('../repositories/sociodemoRepository');
