@@ -1,4 +1,7 @@
 var fs = require('fs');
+var archiver = require('archiver');
+var repo = require('../repositories/sociodemoRepository');
+var libRepo = require('../repositories/libInseeRepository');
 
 /**
  * Creates the CSV file from the result table.
@@ -132,6 +135,35 @@ function csvFileDownload(table, path, creation, columnNames) { //Loïc
         subThemes[subTheme].push(arrRow);
     }
 
+    var output = fs.createWriteStream('./public/example.zip');
+    var archive = archiver('zip', {
+        zlib: {level: 9}
+    });
+
+    output.on('close', function () {
+        console.log(archive.pointer() + ' total bytes');
+        console.log('archiver has been finalized and the output file descriptor has closed.');
+    });
+
+    output.on('end', function () {
+        console.log('Data has been drained');
+    });
+
+    archive.on('warning', function (err) {
+        if (err.code === 'ENOENT') {
+
+        } else {
+
+            throw err;
+        }
+    });
+
+    archive.on('error', function (err) {
+        throw err;
+    });
+
+    archive.pipe(output);
+
     for (let subTheme in subThemes) {
         let csv = "\ufeff"; //"utf" header for utf8 encoding.
 
@@ -144,11 +176,19 @@ function csvFileDownload(table, path, creation, columnNames) { //Loïc
         csv += arrDataConvertToCsv(subThemes[subTheme]);
         //console.log(subThemes[subTheme]);
 
+
         fs.appendFile(path, csv, err => {
-            if (err)
+            if (err) {
                 throw err;
+            } else {
+                //archive.append(fs.createReadStream(path));
+
+            }
         });
+
+
     }
+    archive.finalize();
 }
 
 function jsonFileCreator(json, path = '') {
@@ -275,8 +315,18 @@ function renameColumn(column, columnNames) {
     return column;
 
 }
+
+async function generateParamsCreationFile(queryJson, libAttributes) {
+
+    // resolves concurrent creationFile queries : result and columnNames
+    const tableParams = await Promise.all([repo.queryWithParam(queryJson), libRepo.columnNamesQuery(libAttributes)]);
+
+    return tableParams;
+}
+
 exports.csvCreator = csvCreator;
 exports.csvFileDownload = csvFileDownload;
 exports.jsonCreator = jsonCreator;
+exports.generateParamsCreationFile = generateParamsCreationFile;
 exports.jsonFileCreator = jsonFileCreator;
 exports.deleteFile = deleteFile;

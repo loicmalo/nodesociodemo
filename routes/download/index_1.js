@@ -6,15 +6,14 @@ var repo = require('../../repositories/sociodemoRepository');
 var libRepo = require('../../repositories/libInseeRepository');
 var fmanager = require('../../utils/file-manager_1');
 var fs = require('fs');
+var archiver = require('archiver');
 var VerifyToken = require('../../auth/verifyToken');
 const http = require('http');
 const {fork} = require('child_process');
 var process;
 var statusData = [];
 let maxNbLignesPerRequest = 1000;
-const libAttributes = {
-    attributes: ['id', 'id_indic', 'lib_indic', 'lib_indic_long', 'themes', 'sous_themes', 'niveau_geo', 'annee_data', 'annee_pub']
-};
+
 /* GET home page of export. */
 router.get('/', VerifyToken, function (req, res) {
     let param = req.query.param;
@@ -35,7 +34,8 @@ router.get('/', VerifyToken, function (req, res) {
             //Generate file + send id - append rows through thread if necessary.
             try {
                 var queryJson = qp.getQueryJson(param, maxNbLignesPerRequest);
-                var result = generateParamsCreationFile(queryJson);
+                var libAttributes = qp.getLibAttributes();
+                var result = fmanager.generateParamsCreationFile(queryJson, libAttributes);
 
                 result.then(tableParams => { //SUCCESS CALLBACK
                     var table = tableParams[0];
@@ -195,13 +195,7 @@ router.post('/', VerifyToken, function (req, res) {
     }
 
 });
-async function generateParamsCreationFile(queryJson) {
 
-    // resolves concurrent creationFile queries : result and columnNames
-    const tableParams = await Promise.all([repo.queryWithParam(queryJson), libRepo.columnNamesQuery(libAttributes)]);
-    
-    return tableParams;
-}
 /**
  * Creates the file, and forks the calculations of lines.
  * 
@@ -268,7 +262,7 @@ function forkFileCreation(res, table, columnNames, param, token) {
     if (offset !== 0) {
 
 //Huge calculus in background.
-        process = fork('./utils/download_data.js');
+        process = fork('./utils/download_data_1.js');
         process.send({statusDataNow: statusData[now], id: now, param: param, offset: offset, token: token});
         process.on('message', async (data) => { //Refresh status and number of lignes
             console.log(data);
@@ -279,7 +273,46 @@ function forkFileCreation(res, table, columnNames, param, token) {
                 //Wonder why this should happen.
             }
         });
+    } 
+    /*else {
+        //archiver here
+
+
+        var output = fs.createWriteStream('./example.zip');
+        var archive = archiver('zip', {
+            zlib: {level: 9}
+        });
+
+        output.on('close', function () {
+            console.log(archive.pointer() + ' total bytes');
+            console.log('archiver has been finalized and the output file descriptor has closed.');
+        });
+
+        output.on('end', function () {
+            console.log('Data has been drained');
+        });
+
+        archive.on('warning', function (err) {
+            if (err.code === 'ENOENT') {
+                // log warning
+            } else {
+                // throw error
+                throw err;
+            }
+        });
+
+// good practice to catch this error explicitly
+        archive.on('error', function (err) {
+            throw err;
+        });
     }
+    
+    archive.pipe(output);
+        */
+    
+    
+
+
 }
 
 module.exports = router;
