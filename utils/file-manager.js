@@ -1,4 +1,7 @@
 var fs = require('fs');
+var archiver = require('archiver');
+var repo = require('../repositories/sociodemoRepository');
+var libRepo = require('../repositories/libInseeRepository');
 
 /**
  * Creates the CSV file from the result table.
@@ -81,83 +84,111 @@ function csvCreator(table) {
  */
 function csvFileDownload(table, path, creation, columnNames) { //Loïc
 
-    let csv = "\ufeff"; //"utf" header for utf8 encoding.
-    let arrNames = [];
     let arrRow = [];
-    let arrData = [];
+
     let c = 0;
-    let f = 0;
+
+    let csv = "";
+    let subTheme = "";
+    let subThemes = new Object();
+    let subThemesColumnNames = new Object();
 
     // Loop the array of objects
 
     for (let row in table.sociodemo) {
         arrRow = [];
-
+        let f = 0;
+        creation = false;
         c++;
         v = table.sociodemo[row];//["dataValues"];
+
+        if (!(v["sous_themes"] in subThemes)) {
+
+            creation = true;
+            subTheme = v["sous_themes"];
+
+            subThemes[subTheme] = [];
+            subThemesColumnNames[subTheme] = [];
+        }
 
         for (let field in v) {
             f++;
             value = v[field];
 
-            if (c === 1 && creation && f < Object.keys(v).length) {
-                arrNames.push(field);
-            }
+            if (creation && f < Object.keys(v).length) {
 
+                subThemesColumnNames[subTheme].push(field);
+            }
             // Loïc jsonb column names 
-            if (c === 1 && creation && f === Object.keys(v).length) {
+            if (creation && f === Object.keys(v).length) {
                 if (typeof value === "object") {
 
-                    //console.log(parsedColumnNames);
+
                     for (let key in value) {
-                        arrNames.push(renameColumn(key, columnNames));
+
+                        subThemesColumnNames[subTheme].push(renameColumn(key, columnNames));
                     }
-
                 }
-                //console.log("2");
-                //console.log(parsedColumnNames);
-
             }
             arrRow.push(value);
         }
-        arrData.push(arrRow);
+        subThemes[subTheme].push(arrRow);
     }
 
-    if (creation) {
-        for (let i = 0; i < arrNames.length; i++) {
-            csv += '"' + arrNames[i] + '"' + ";";
-        }
-        csv = csv.substr(0, csv.length - 1); //DROPPING LAST ";".
-        csv += "\r\n";
-    }
+    var output = fs.createWriteStream('./public/example.zip');
+    var archive = archiver('zip', {
+        zlib: {level: 9}
+    });
 
-    for (let i = 0; i < arrData.length; i++) {
-        for (let j = 0; j < arrData[i].length; j++) {
+    output.on('close', function () {
+        console.log(archive.pointer() + ' total bytes');
+        console.log('archiver has been finalized and the output file descriptor has closed.');
+    });
 
-            if (typeof arrData[i][j] === "object") {
-                if (arrData[i][j] !== null) {
-                    csv += objectConvertToCsv(arrData[i][j]);
-                } else {
-                    csv += "";
-                }
-            } else {
-                csv += '"' + arrData[i][j] + '"' + ";";
+    output.on('end', function () {
+        console.log('Data has been drained');
+    });
 
-            }
-        }
-        csv = csv.substr(0, csv.length - 1); //DROPPING LAST ";".
-        csv += "\r\n";
-    }
+    archive.on('warning', function (err) {
+        if (err.code === 'ENOENT') {
 
-    fs.appendFile(path, csv, err => {
-        if (err)
-            throw err;
-        if (creation) {
-            console.log("file saved as : " + path);
         } else {
-            console.log("data appent to file " + path);
+
+            throw err;
         }
     });
+
+    archive.on('error', function (err) {
+        throw err;
+    });
+
+    archive.pipe(output);
+
+    for (let subTheme in subThemes) {
+        let csv = "\ufeff"; //"utf" header for utf8 encoding.
+
+        path = './public/' + subTheme + '.csv';
+        if (fs.existsSync(path)) {
+        } else {
+            csv += arrNamesConvertToCsv(subThemesColumnNames[subTheme]);
+
+        }
+        csv += arrDataConvertToCsv(subThemes[subTheme]);
+        //console.log(subThemes[subTheme]);
+
+
+        fs.appendFile(path, csv, err => {
+            if (err) {
+                throw err;
+            } else {
+                //archive.append(fs.createReadStream(path));
+
+            }
+        });
+
+
+    }
+    archive.finalize();
 }
 
 function jsonFileCreator(json, path = '') {
@@ -232,6 +263,41 @@ function objectConvertToCsv(object) {
     return csv;
 }
 
+function arrNamesConvertToCsv(arrNames) {
+    let csv = "";
+
+    for (let i = 0; i < arrNames.length; i++) {
+        csv += '"' + arrNames[i] + '"' + ";";
+    }
+    csv = csv.substr(0, csv.length - 1); //DROPPING LAST ";".
+    csv += "\r\n";
+    return csv;
+}
+
+function arrDataConvertToCsv(arrData) {
+    let csv = "";
+    //console.log(arrData);
+    for (let i = 0; i < arrData.length; i++) {
+        //console.log(arrData[i].length);
+        for (let j = 0; j < arrData[i].length; j++) {
+
+            if (typeof arrData[i][j] === "object") {
+                if (arrData[i][j] !== null) {
+                    csv += objectConvertToCsv(arrData[i][j]);
+                } else {
+                    csv += "";
+                }
+            } else {
+                csv += '"' + arrData[i][j] + '"' + ";";
+
+            }
+        }
+        csv = csv.substr(0, csv.length - 1); //DROPPING LAST ";".
+        csv += "\r\n";
+    }
+    return csv;
+}
+
 /**
  * 
  * @param {type} column
@@ -249,8 +315,18 @@ function renameColumn(column, columnNames) {
     return column;
 
 }
+
+async function generateParamsCreationFile(queryJson, libAttributes) {
+
+    // resolves concurrent creationFile queries : result and columnNames
+    const tableParams = await Promise.all([repo.queryWithParam(queryJson), libRepo.columnNamesQuery(libAttributes)]);
+
+    return tableParams;
+}
+
 exports.csvCreator = csvCreator;
 exports.csvFileDownload = csvFileDownload;
 exports.jsonCreator = jsonCreator;
+exports.generateParamsCreationFile = generateParamsCreationFile;
 exports.jsonFileCreator = jsonFileCreator;
 exports.deleteFile = deleteFile;

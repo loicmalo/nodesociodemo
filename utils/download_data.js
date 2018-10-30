@@ -3,7 +3,7 @@
  */
 
 //Libraries/modules
-const fmanager = require('./file-manager_1');
+const fmanager = require('./file-manager');
 const http = require('http');
 const qp = require('./sociodemo-query-parser');
 const repo = require('../repositories/sociodemoRepository');
@@ -101,14 +101,18 @@ function makeRequest(param, refreshObj) {
   let maxResults = 1000;
   try {
     let queryJson = qp.getQueryJson(param, maxResults);
-    let result = repo.queryWithParam(queryJson);
+    let libAttributes = qp.getLibAttributes();
+    let result = fmanager.generateParamsCreationFile(queryJson, libAttributes);
 
-    result.then(function (table) { //SUCCESS CALLBACK
+    result.then(function (tableParams) { //SUCCESS CALLBACK
+      var table = tableParams[0];
+      var columnNames = tableParams[1];
       if (table === undefined) {
         throw "Table could not be acquired";
       }
       let JSONstr = fmanager.jsonCreator(table); //Turns table into returnable JSON.
-
+      let JSONcolumnNames = fmanager.jsonCreator(columnNames);
+      
       let nbResults = table.length;
       if (nbResults === maxResults) {
         lastId = '"' + String(table[table.length - 1]["dataValues"]["id"]) + '"'; //New offset if table.length = 100.
@@ -120,7 +124,11 @@ function makeRequest(param, refreshObj) {
       let tableResultObject = new Object();
       tableResultObject.offset = JSON.parse(lastId);
       tableResultObject.sociodemo = JSON.parse(JSONstr);
-      return refreshObj(paramObj, tableResultObject);
+      
+      let tableLibObject = new Object();
+      tableLibObject = JSON.parse(JSONcolumnNames);
+      
+      return refreshObj(paramObj, tableResultObject, tableLibObject);
 
     }).catch(e => {
       console.log(e);
@@ -141,7 +149,7 @@ function makeRequest(param, refreshObj) {
  * @param {Object} resultSent
  * @returns {undefined}
  */
-function refreshObj(paramObj, resultSent) {
+function refreshObj(paramObj, resultSent, columnNamesSent) {
 
   offset = resultSent.offset;
   paramObj.offset = offset;
@@ -150,7 +158,8 @@ function refreshObj(paramObj, resultSent) {
   nblignestot += resultSent.sociodemo.length;
 
   //Creating file.
-  fmanager.csvFileDownload(resultSent, path, creation);
+  //console.log(columnNamesSent);
+  fmanager.csvFileDownload(resultSent, path, creation, columnNamesSent);
 
   //reset data and send message
   process.send({status: "En cours", id: now, nblignes: nblignestot});

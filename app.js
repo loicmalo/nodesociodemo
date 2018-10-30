@@ -9,7 +9,7 @@ var indexRouter = require('./routes/index');
 var exportRouter = require('./routes/export/index');
 var columnRouter = require('./routes/column/index');
 var previewRouter = require('./routes/preview/index');
-var downloadRouter = require('./routes/download/index_1');
+var downloadRouter = require('./routes/download/index');
 
 var app = express();
 
