@@ -64,7 +64,7 @@ router.get('/', VerifyToken, function (req, res) {
 
 
 /* POST to home page of export. */
-router.get('/', VerifyToken, function (req, res) {
+router.post('/', VerifyToken, function (req, res) {
   let param = req.body.param;  
 
   if (param === undefined) { //Case with no parameter given.
